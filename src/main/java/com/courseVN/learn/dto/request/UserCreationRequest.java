@@ -1,5 +1,6 @@
 package com.courseVN.learn.dto.request;
 
+import com.courseVN.learn.exception.ErrorCode;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,10 +12,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserCreationRequest {
-    @Size(min = 3, message = "Username password must be at least 8 characters")
+    @Size(min = 3, message = "USERNAME_INVALID")
     private String username;
 
-    @Size(min = 8, message = "password must be at least 8 characters")
+    @Size(min = 8, message = "PASSWORD_INVALID")
     private String password;
     private String firstName;
     private String lastName;

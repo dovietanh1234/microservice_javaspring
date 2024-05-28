@@ -1,5 +1,6 @@
 package com.courseVN.learn.controller;
 
+import com.courseVN.learn.dto.request.ApiResponse;
 import com.courseVN.learn.dto.request.UserCreationRequest;
 import com.courseVN.learn.dto.request.UserUpdateRequest;
 import com.courseVN.learn.entity.User;
@@ -16,8 +17,11 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/create")
-    User createUser(@RequestBody @Valid UserCreationRequest request){ //@Valid ta can validate cai object nay theo cai rule dc define trong object
-        return userService.createRequest(request);
+   ApiResponse<User> createUser(@RequestBody @Valid UserCreationRequest request){ //@Valid ta can validate cai object nay theo cai rule dc define trong object
+        ApiResponse<User> response = new ApiResponse<>();
+        response.setMessage("create user successfully");
+        response.setResult( userService.createRequest(request) );
+        return response;
     }
     // thk nay se tra ve exception: MethodArgumentNotValidException -> bat thang nay trong handle exception
 
