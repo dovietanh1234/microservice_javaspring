@@ -18,6 +18,14 @@ public class UserService {
 
     public User createRequest(UserCreationRequest request){
         User user = new User();
+
+
+        // tra ve email da ton tai validate request -> va catch exception cua no thanh cua minh
+        if( userRepository.existsByUsername(request.getUsername() ) ){
+            throw new RuntimeException("user existed");
+        }
+        // runtimeException caught in exception.
+
         user.setUsername(request.getUsername() );
         user.setFirstName(request.getFirstName() );
         user.setLastName(request.getLastName() );

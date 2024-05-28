@@ -4,6 +4,7 @@ import com.courseVN.learn.dto.request.UserCreationRequest;
 import com.courseVN.learn.dto.request.UserUpdateRequest;
 import com.courseVN.learn.entity.User;
 import com.courseVN.learn.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +16,10 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/create")
-    User createUser(@RequestBody UserCreationRequest request){
+    User createUser(@RequestBody @Valid UserCreationRequest request){ //@Valid ta can validate cai object nay theo cai rule dc define trong object
         return userService.createRequest(request);
     }
+    // thk nay se tra ve exception: MethodArgumentNotValidException -> bat thang nay trong handle exception
 
     @GetMapping("/get")
     List<User> getUsers(){
