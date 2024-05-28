@@ -4,9 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
@@ -14,16 +13,18 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
     @Id
+    // auto create random string never duplicate
     //@GeneratedValue(strategy = GenerationType.UUID)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // auto create random string never duplicate
-    private long id;
-    private String username;
-    private String password;
-    private String firstName;
-    private String lastName;
-    private LocalDate dob;
+     long id;
+     String username;
+     String password;
+     String firstName;
+     String lastName;
+     LocalDate dob;
 
 }

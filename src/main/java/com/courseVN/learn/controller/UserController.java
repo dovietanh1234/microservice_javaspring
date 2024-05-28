@@ -3,17 +3,20 @@ package com.courseVN.learn.controller;
 import com.courseVN.learn.dto.request.ApiResponse;
 import com.courseVN.learn.dto.request.UserCreationRequest;
 import com.courseVN.learn.dto.request.UserUpdateRequest;
+import com.courseVN.learn.dto.response.UserResponse;
 import com.courseVN.learn.entity.User;
 import com.courseVN.learn.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController("/user")
-@RequiredArgsConstructor
+@RestController
 public class UserController {
+
+    @Autowired
     private UserService userService;
 
     @PostMapping("/create")
@@ -31,12 +34,12 @@ public class UserController {
     }
 
     @GetMapping("/detail/{userId}")
-    User getUser(@PathVariable("userId") String userId){
+    UserResponse getUser(@PathVariable("userId") String userId){
         return userService.getUserDetail(userId);
     }
 
     @PutMapping("/update/{userId}")
-    User updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest userUpdateRequest){
+    UserResponse updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest userUpdateRequest){
         return userService.updateUser( userId, userUpdateRequest );
     }
 

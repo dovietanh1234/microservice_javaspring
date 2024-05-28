@@ -18,7 +18,7 @@ public class GlobalExeptionHandler {
     ResponseEntity<ApiResponse<String>> handlingRuntimeException(Exception e){ // auto inject class through params
        ApiResponse<String> res = new ApiResponse<>();
        res.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-       res.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage() );
+       res.setMessage(e.getMessage() );
         return ResponseEntity.badRequest().body(res);
     }
     /*

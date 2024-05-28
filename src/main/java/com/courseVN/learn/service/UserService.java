@@ -2,39 +2,40 @@ package com.courseVN.learn.service;
 
 import com.courseVN.learn.dto.request.UserCreationRequest;
 import com.courseVN.learn.dto.request.UserUpdateRequest;
+import com.courseVN.learn.dto.response.UserResponse;
 import com.courseVN.learn.entity.User;
 import com.courseVN.learn.exception.AppException;
 import com.courseVN.learn.exception.ErrorCode;
+import com.courseVN.learn.mapper.UserMapper;
 import com.courseVN.learn.repository.UserRepository;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
+//@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+//RequireArgConstructor
 public class UserService {
+    @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private UserMapper userMapper;
 
     public User createRequest(UserCreationRequest request){
-        User user = new User();
-
-
-        // tra ve email da ton tai validate request -> va catch exception cua no thanh cua minh
         if( userRepository.existsByUsername(request.getUsername() ) ){
-            //throw new RuntimeException("user existed");
-            // thay vi throw exception -> ta se throw ra cai exception cua ta da config ke thua tu thk RuntimeException
             throw new RuntimeException();
         }
         // runtimeException caught in exception.
+//user.setId(Long.parseLong(UUID.randomUUID().toString()));
 
-        user.setUsername(request.getUsername() );
-        user.setFirstName(request.getFirstName() );
-        user.setLastName(request.getLastName() );
-        user.setPassword(request.getPassword() );
-        user.setDob( request.getDob() );
+        // map giua UserDto vao User
+        User user = userMapper.toUser(request);
         userRepository.save(user);
         return user;
     }
@@ -43,22 +44,23 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User getUserDetail(String userId){
-       return userRepository.findById( userId ).orElseThrow( ()-> new AppException(ErrorCode.USER_NOTFOUND));
+    public UserResponse getUserDetail(String userId){
+       return userMapper.toUserResponse(userRepository.findById( userId ).orElseThrow( ()-> new AppException(ErrorCode.USER_NOTFOUND))) ;
     }
 
-    public User updateUser(String userId, UserUpdateRequest userUpdateRequest){
-        User user = getUserDetail(userId);
-        user.setPassword( userUpdateRequest.getPassword() );
-        user.setLastName( userUpdateRequest.getLastName() );
-        user.setFirstName( userUpdateRequest.getFirstName() );
-        user.setDob( userUpdateRequest.getDob() );
+    public User getUserDetail2(String userId){
+        return userRepository.findById( userId ).orElseThrow( ()-> new AppException(ErrorCode.USER_NOTFOUND)) ;
+    }
+
+    public UserResponse updateUser(String userId, UserUpdateRequest userUpdateRequest){
+        User user = getUserDetail2(userId);
+        userMapper.updateUser( user, userUpdateRequest );
         userRepository.save( user );
-        return user;
+        return userMapper.toUserResponse(user);
     }
 
     public String deleteUser(String userId){
-        User user = getUserDetail(userId);
+        User user = getUserDetail2(userId);
          userRepository.delete( user );
          return "delete successfully";
     }
