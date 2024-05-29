@@ -1,4 +1,4 @@
-package com.courseVN.learn.dto.response;
+package com.courseVN.learn.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,7 +8,6 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
-public class AuthenticationResponse {
+public class IntrospectRequest {
     String token;
-    boolean isAuthenticated;
 }

@@ -1,12 +1,11 @@
 package com.courseVN.learn.exception;
 
-import com.courseVN.learn.dto.request.ApiResponse;
+import com.courseVN.learn.dto.response.ApiResponse;
+import com.nimbusds.jose.JOSEException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.util.Objects;
 
 // khai bao cho spring biet day la loi se handle all Exception -> sd annotation @ControllerAdvice
 @ControllerAdvice
@@ -16,10 +15,10 @@ public class GlobalExeptionHandler {
     // Tao mot Exception Bat all exception ma ngoai le! ko co trong nay
     @ExceptionHandler(value = Exception.class)
     ResponseEntity<ApiResponse<String>> handlingRuntimeException(Exception e){ // auto inject class through params
-       ApiResponse<String> res = new ApiResponse<>();
-       res.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-       res.setMessage(e.getMessage() );
-        return ResponseEntity.badRequest().body(res);
+        return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
+                .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
+                .message(e.getMessage())
+                .build());
     }
     /*
     * GlobalExeptionHandler -> quan ly catch all exceptions, each exception will have the error code & different message
@@ -31,12 +30,19 @@ public class GlobalExeptionHandler {
     ResponseEntity<ApiResponse<String>> handlingAppException(AppException e){  // AUTO INJECT PARAMETERS
         ErrorCode errorCode = e.getErrorCode();
 
-        ApiResponse<String> res = new ApiResponse<>();
-        res.setCode(errorCode.getCode());
-        res.setMessage(errorCode.getMessage() );
-        return ResponseEntity.badRequest().body(res);
+        return ResponseEntity.badRequest().body( ApiResponse.<String>builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build());
     }
 
+    @ExceptionHandler(value = JOSEException.class)
+    ResponseEntity<ApiResponse<String>> handlingJOSEException(JOSEException e){
+        return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
+                .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
+                .message(e.getMessage())
+                .build());
+    }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<String>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException e){
@@ -49,14 +55,10 @@ public class GlobalExeptionHandler {
             // log ra thui
             System.out.println(ex.getMessage());
         }
-
-
-//Phương thức valueOf() được sử dụng để chuyển đối kiểu dữ liệu khác thành kieu du lieu cua no
-        ApiResponse<String> res = new ApiResponse<>();
-
-        res.setCode(errorCode.getCode());
-        res.setMessage(errorCode.getMessage() );
-        return ResponseEntity.badRequest().body(res);
+        return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build());
 
         //return ResponseEntity.badRequest().body(Objects.requireNonNull(e.getFieldError()).getDefaultMessage());
     }

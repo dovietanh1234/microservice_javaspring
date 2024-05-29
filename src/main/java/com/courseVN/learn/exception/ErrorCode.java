@@ -10,7 +10,8 @@ public enum ErrorCode {
     USER_NOTFOUND (1404, "user not found"),
     USERNAME_INVALID(1401, "username must be at least 8 characters"),
     PASSWORD_INVALID(1401, "password must be at least 8 characters"),
-    INVALID_KEY(1401, "invalid message key!")
+    INVALID_KEY(1401, "invalid message key!"),
+    UNAUTHENTICATED(1401, "unauthenticated!")
     ;
     private int code;
     private String message;

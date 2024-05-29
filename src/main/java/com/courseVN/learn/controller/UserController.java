@@ -1,13 +1,12 @@
 package com.courseVN.learn.controller;
 
-import com.courseVN.learn.dto.request.ApiResponse;
+import com.courseVN.learn.dto.response.ApiResponse;
 import com.courseVN.learn.dto.request.UserCreationRequest;
 import com.courseVN.learn.dto.request.UserUpdateRequest;
 import com.courseVN.learn.dto.response.UserResponse;
 import com.courseVN.learn.entity.User;
 import com.courseVN.learn.service.UserService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
