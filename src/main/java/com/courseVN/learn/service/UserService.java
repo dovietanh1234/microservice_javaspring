@@ -4,6 +4,7 @@ import com.courseVN.learn.dto.request.UserCreationRequest;
 import com.courseVN.learn.dto.request.UserUpdateRequest;
 import com.courseVN.learn.dto.response.UserResponse;
 import com.courseVN.learn.entity.User;
+import com.courseVN.learn.enums.Roles;
 import com.courseVN.learn.exception.AppException;
 import com.courseVN.learn.exception.ErrorCode;
 import com.courseVN.learn.mapper.UserMapper;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +31,9 @@ public class UserService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     public User createRequest(UserCreationRequest request){
         if( userRepository.existsByUsername(request.getUsername() ) ){
             throw new RuntimeException();
@@ -38,8 +43,15 @@ public class UserService {
 
         // map giua UserDto vao User
         User user = userMapper.toUser(request);
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+       // PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10); bo dong nay vi chung ta da tao bean roi
         user.setPassword( passwordEncoder.encode(request.getPassword()) );
+
+        // dua vao role cua nguoi dung:
+        HashSet<String> roles = new HashSet<>();
+        roles.add(Roles.USER.name());
+        user.setRoles(roles);
+
+
         userRepository.save(user);
         return user;
     }

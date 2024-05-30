@@ -20,12 +20,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 @Service
 public class AuthenticationService {
@@ -65,9 +68,6 @@ public class AuthenticationService {
             throw new AppException( ErrorCode.UNAUTHENTICATED );
         }
 
-
-
-
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest authenticationRequest){
@@ -80,7 +80,7 @@ public class AuthenticationService {
             throw new AppException(  ErrorCode.UNAUTHENTICATED);
         }
 
-        String token = generateToken(authenticationRequest.getUsername());
+        String token = generateToken(user);
 
         return AuthenticationResponse.builder()
                 .isAuthenticated(passwordEncoder.matches(authenticationRequest.getPassword(), user.getPassword()))
@@ -91,18 +91,19 @@ public class AuthenticationService {
     }
 
     // create a method to create a token:
-    private String generateToken( String username ){
+    private String generateToken( User user ){
 
         //1. create header ->encode algorithm
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         //2. de built đc payload ta can co khai niem la "Claims" data in body no duoc goi la Claims
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(username)
+                .subject(user.getUsername())
                 .issuer("vietanh")
                 .issueTime( new Date())
                 .expirationTime(new Date(Instant.now().plus( 1, ChronoUnit.HOURS ).toEpochMilli()))
-                .claim("MyCustomClaim", "this is role maybe...")
+                .claim("scope", buildScope(user)) // we config a claim and set roles inside by to building a func get roles
+                // so to put the roles inside we need to config a function:
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
        //3. build token
@@ -116,5 +117,21 @@ public class AuthenticationService {
             throw new AppException( ErrorCode.UNAUTHENTICATED );
         }
     }
+
+    private String buildScope(User user){ // built scope tu 1 user
+        // vi la cai scope is a list so we use StringJoiner
+        // boi vi cac cai scope trong oauth2 no quy dinh phan cach nhau bang dau cach
+        StringJoiner stringJoiner = new StringJoiner(" ");
+        if(!CollectionUtils.isEmpty(user.getRoles())){
+           // user.getRoles().forEach(s -> stringJoiner.add(s));
+            user.getRoles().forEach(stringJoiner::add);
+        }
+
+        return stringJoiner.toString();
+
+    }
+
+
+
 
 }
