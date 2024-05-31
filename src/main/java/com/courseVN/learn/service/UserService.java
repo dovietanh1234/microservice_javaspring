@@ -100,6 +100,9 @@ public class UserService {
         // sau khi dang nhap thanh cong user se duoc mapping vao Security Context holder qua Authentication
        var context = SecurityContextHolder.getContext();
 
+       // ngoai username co nhiều câc cái khác nữa như username, roles ...
+       // context.getAuthentication().getAuthorities()
+
        String name = context.getAuthentication().getName(); // get dc cai authentication object la cai user da dang nhap
 
         User user = userRepository.findByUsername(name).orElseThrow( () -> new AppException( ErrorCode.USER_NOTFOUND ) );

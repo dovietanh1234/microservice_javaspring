@@ -7,6 +7,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.nio.file.AccessDeniedException;
+
+/*
+ token invalid -> 401 & ko co thong bao loi
+* Những cái error NÓ XẢY RA TRÊN TẦNG FILTER trước khi vào cái service của chúng ta => CÁI GlobalException ko thể xử lý
+*  được tình huống đó! => ta phai xư ly trong spring security Config.
+* */
+
 // khai bao cho spring biet day la loi se handle all Exception -> sd annotation @ControllerAdvice
 @ControllerAdvice
 public class GlobalExeptionHandler {
@@ -30,9 +38,11 @@ public class GlobalExeptionHandler {
     ResponseEntity<ApiResponse<String>> handlingAppException(AppException e){  // AUTO INJECT PARAMETERS
         ErrorCode errorCode = e.getErrorCode();
 
-        return ResponseEntity.badRequest().body( ApiResponse.<String>builder()
-                .code(errorCode.getCode())
-                .message(errorCode.getMessage())
+        return ResponseEntity
+                .status(errorCode.getHttpStatusCode())
+                .body( ApiResponse.<String>builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
                 .build());
     }
 
@@ -61,6 +71,14 @@ public class GlobalExeptionHandler {
                 .build());
 
         //return ResponseEntity.badRequest().body(Objects.requireNonNull(e.getFieldError()).getDefaultMessage());
+    }
+
+    @ExceptionHandler(value = AccessDeniedException.class)
+    ResponseEntity<ApiResponse<String>> handlingAccessDeniedException(AccessDeniedException e){
+        return ResponseEntity.status( ErrorCode.UNAUTHORIZED.getHttpStatusCode() ).body(ApiResponse.<String>builder()
+                .code(ErrorCode.UNAUTHORIZED.getCode())
+                .message(e.getMessage())
+                .build());
     }
 
 }

@@ -45,7 +45,10 @@ public class SecurityConfig {
                 oauth2.jwt( jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder()) //authenticate cho cai jwt cua chung ta generate
                        .jwtAuthenticationConverter(jwtAuthenticationConverter()) // config 1 cai bean converter jwt Authentication de sua lai cai Authority: "SCOPE_ADMIN" -> "ROLE_ADMIN"
                 )
-
+                // securityConfig cua spring no se cung cap cho chung ta 1 cai config de handle EXCEPTION 401:
+                        .authenticationEntryPoint(new JWTAuthenticationEntryPoint())
+                // .authenticationEntryPoint() -> khi ma authentication fail no se dieu huong user di dau? -> return error message
+                // .authenticationEntryPoint() -> no yc implement mot AuthenticationEntryPoint -> vi vay ta se tao 1 class de xu ly!
         );
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
         return httpSecurity.build();
