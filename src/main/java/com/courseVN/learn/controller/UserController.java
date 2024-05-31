@@ -9,6 +9,8 @@ import com.courseVN.learn.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,12 +32,13 @@ public class UserController {
     }
     // thk nay se tra ve exception: MethodArgumentNotValidException -> bat thang nay trong handle exception
 
+    // method nay se chi nhung ai co role admin ms di vao:
+
     @GetMapping("/get")
     List<User> getUsers(){
     // thì trong spring để get cái thông tin mà hiện tại đang đăng nhập đang đc authenticate trong 1 cái request
     // ta sẽ sử dụng SecurityContextHolder. SecurityContextHolder -> sẽ chưa user dang dăng nhập hiện tại
        var authentication = SecurityContextHolder.getContext().getAuthentication();
-
         log.info( "username: {}", authentication.getName() );
        authentication.getAuthorities().forEach( grantedAuthority -> log.info( grantedAuthority.getAuthority() ) );
         // nghia la trong SecurityContextHolder khi ma AuthenticationProvider() == true no se gan user vao
@@ -48,6 +51,7 @@ public class UserController {
         return userService.getUsers();
     }
 
+  //  @PostAuthorize("hasRole('ADMIN')")
     @GetMapping("/detail/{userId}")
     UserResponse getUser(@PathVariable("userId") String userId){
         return userService.getUserDetail(userId);
@@ -61,6 +65,12 @@ public class UserController {
     @GetMapping("/delete/{userId}")
     String deleteUser(@PathVariable("userId") String userId){
         return userService.deleteUser( userId );
+    }
+
+    // chuyen token thông qua header sẽ lấy được thông tin của chính mình.
+    @GetMapping("/myInfo")
+    UserResponse getInfoByToken(){
+        return userService.getMyInfo();
     }
 
 }

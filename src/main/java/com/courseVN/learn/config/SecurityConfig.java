@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,6 +22,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINT = {"/users", "/auth/token", "/auth/introspect"};
 
@@ -32,8 +34,9 @@ public class SecurityConfig {
         httpSecurity.authorizeHttpRequests( request ->
                 request
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users").hasAuthority("ROLE_ADMIN") //.hasAuthority("SCOPE_ADMIN") custom cai SCOPE_ADMIN => sang cai khac ROLE_ADMIN
-                        .requestMatchers(HttpMethod.GET, "/admin").hasRole("ADMIN") // -> khai bao kieu nay se tu nhien hon va robust hon rat nhieu so voi hasAuthority()
+                        // turn off authority in url -> to test method authority
+                       // .requestMatchers(HttpMethod.GET, "/users").hasAuthority("ROLE_ADMIN") //.hasAuthority("SCOPE_ADMIN") custom cai SCOPE_ADMIN => sang cai khac ROLE_ADMIN
+                       // .requestMatchers(HttpMethod.GET, "/admin").hasRole("ADMIN") // -> khai bao kieu nay se tu nhien hon va robust hon rat nhieu so voi hasAuthority()
                         // vi no tu dong choc vao authorities va lay ra cac roles ben trong no.
                         .anyRequest().authenticated()
         );

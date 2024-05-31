@@ -13,6 +13,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -56,10 +59,21 @@ public class UserService {
         return user;
     }
 
+    @PreAuthorize("hasRole('ADMIN')") // PreAuthorize -> spring se tao ra 1 cai proxy ngay truoc cai ham nay. no se check role truoc
     public List<User> getUsers(){
         return userRepository.findAll();
     }
 
+    // ngoai preAuthorize() se co: "PostAuthorize" no cx co tac dung tuong tu PreAuthorize()
+    // nhung no co the check id xem co phai la chinh minh ko:
+    // id trong payload in token  == id trong param cua minh chuyen vao.
+
+    //PostAuthorize() la sau khi method getUserDetail() duoc thuc hien xong thi no moi check "PostAuthorize()" xem
+    // co phai la dung role hay ko? con "@PreAuthorize" la no se check truoc.
+    // trong thuc te thi PreAuthorize() duoc su dung nhieu hon PostAuthorize()
+    // *Annotation PostAuthorize() no cung cap cho chung ta Spring express language de chung ta dua ra cai chi dan.
+    @PostAuthorize("returnObject.username == authentication.name") // user chi co the lay dc thong tin cua chinh minh ma thoi
+    // returnObject chinh la "UserResponse" ma chung ta tra ve == authentication.name cua spring security context holder
     public UserResponse getUserDetail(String userId){
        return userMapper.toUserResponse(userRepository.findById( userId ).orElseThrow( ()-> new AppException(ErrorCode.USER_NOTFOUND))) ;
     }
@@ -79,6 +93,18 @@ public class UserService {
         User user = getUserDetail2(userId);
          userRepository.delete( user );
          return "delete successfully";
+    }
+
+    // guu token len va lay ve thong tin cua minh:
+    public UserResponse getMyInfo(){
+        // sau khi dang nhap thanh cong user se duoc mapping vao Security Context holder qua Authentication
+       var context = SecurityContextHolder.getContext();
+
+       String name = context.getAuthentication().getName(); // get dc cai authentication object la cai user da dang nhap
+
+        User user = userRepository.findByUsername(name).orElseThrow( () -> new AppException( ErrorCode.USER_NOTFOUND ) );
+
+        return userMapper.toUserResponse(user);
     }
 
 
