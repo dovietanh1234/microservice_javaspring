@@ -5,6 +5,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -25,7 +27,12 @@ public class User {
      String password;
      LocalDate dob;
 
-    @ElementCollection
-     Set<String> roles;
+     //@ElementCollection // thang nay la de cho phep database luu vao 1 List nhe!
+
+    // cach 1:
+//    @Transient
+//    Set<Role> roles = new HashSet<>();
+    @ManyToMany
+    Set<Role> roles;
 
 }

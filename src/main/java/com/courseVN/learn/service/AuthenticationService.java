@@ -124,7 +124,9 @@ public class AuthenticationService {
         StringJoiner stringJoiner = new StringJoiner(" ");
         if(!CollectionUtils.isEmpty(user.getRoles())){
            // user.getRoles().forEach(s -> stringJoiner.add(s));
-            user.getRoles().forEach(stringJoiner::add);
+
+          // thay doi gia tri tu String -> entity roles
+           // user.getRoles().forEach(stringJoiner::add);
         }
 
         return stringJoiner.toString();

@@ -52,7 +52,7 @@ public class UserService {
         // dua vao role cua nguoi dung:
         HashSet<String> roles = new HashSet<>();
         roles.add(Roles.USER.name());
-        user.setRoles(roles);
+      //  user.setRoles(roles);
 
 
         userRepository.save(user);
