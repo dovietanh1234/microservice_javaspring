@@ -23,6 +23,20 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    /*
+    * tu custom cai Validate -> tu tao mot annotation
+    *
+    * nhan 1 request roi check o tang service or controller
+    *
+    * -> nhung no se can du lieu o nhieu noi & nhieu noi can validate
+    *
+    * Vay? 1 cach khac chung ta co the nghi den chung ta co the build duoc 1 cai custome annotaion duoc ko?
+    * -> de chung ta co the validate o cac cai tang object.
+    *
+    * => tao 1 cai annotation de validate du lieu!
+    *
+    * */
+
     @PostMapping("/create")
    ApiResponse<User> createUser(@RequestBody @Valid UserCreationRequest request){ //@Valid ta can validate cai object nay theo cai rule dc define trong object
         return ApiResponse.<User>builder()
