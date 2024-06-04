@@ -69,7 +69,8 @@ public class SecurityConfig {
 
         // B2 customize authority Mapper cho cai Converter nay:
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_"); // CHUYEN SCOPE_ -> ROLE
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix(""); // da gan prefix luc tao token roi thi ta se bo trong prefix o day
+// o day la se them tien to vao all cac roles trong scope
 
         /*
         * setAuthoritiesClaimDelimiter() -> Claim name mac dinh la scope -> chuyen thanh cai khac!

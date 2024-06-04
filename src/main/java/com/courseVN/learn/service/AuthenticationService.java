@@ -118,6 +118,7 @@ public class AuthenticationService {
         }
     }
 
+    // VI LA vua sua lai ROLES & PERMISSION vào trong Users
     private String buildScope(User user){ // built scope tu 1 user
         // vi la cai scope is a list so we use StringJoiner
         // boi vi cac cai scope trong oauth2 no quy dinh phan cach nhau bang dau cach
@@ -126,7 +127,19 @@ public class AuthenticationService {
            // user.getRoles().forEach(s -> stringJoiner.add(s));
 
           // thay doi gia tri tu String -> entity roles
-           // user.getRoles().forEach(stringJoiner::add);
+            user.getRoles().forEach( role -> {
+                // hom truoc la co 1 list string h ta se sua lai
+                // add roles:
+                stringJoiner.add("ROLE_" + role.getName()); //Them tien to ROLE_ de phan bien role
+
+                // check permission is null?
+                if(!CollectionUtils.isEmpty( role.getPermissions() ))
+                    role.getPermissions().forEach(permission -> stringJoiner.add(permission.getName()));// add permissions:
+
+            } );
+
+            // thuong thi khi ta de nhieu role or permission trong role thi header chi nhan toi da 4kb
+            // chung ta neu de nhieu qua se gay nang cai token.
         }
 
         return stringJoiner.toString();

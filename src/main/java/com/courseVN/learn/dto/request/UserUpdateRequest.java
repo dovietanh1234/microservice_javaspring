@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -16,4 +18,5 @@ public class UserUpdateRequest {
      String firstName;
      String lastName;
      LocalDate dob;
+     List<String> roles; // khi chuyen role vao cho user ta chi can mot list role string
 }

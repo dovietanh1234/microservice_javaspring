@@ -8,6 +8,7 @@ import com.courseVN.learn.enums.Roles;
 import com.courseVN.learn.exception.AppException;
 import com.courseVN.learn.exception.ErrorCode;
 import com.courseVN.learn.mapper.UserMapper;
+import com.courseVN.learn.repository.RoleRepository;
 import com.courseVN.learn.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,9 @@ public class UserService {
     private UserMapper userMapper;
 
     @Autowired
+    private RoleRepository _roleRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     public User createRequest(UserCreationRequest request){
@@ -59,10 +63,14 @@ public class UserService {
         return user;
     }
 
-    @PreAuthorize("hasRole('ADMIN')") // PreAuthorize -> spring se tao ra 1 cai proxy ngay truoc cai ham nay. no se check role truoc
+    //@PreAuthorize("hasRole('ADMIN')")  -> Vay thi bay h o day! Khi sd "hasRole()" thì ta se chi ap dung cho ROLE_ADMIN or ROLE_USER
+    // TAI VI: no se check cai prefix ROLE_ de lay ra role cua nguoi dung!
+    // PreAuthorize -> spring se tao ra 1 cai proxy ngay truoc cai ham nay. no se check role truoc
+    @PreAuthorize("hasAuthority('APPROVE_POST')") // su dung "hasAuthority()" cho cac permission -> no se map chinh xac cai authority
     public List<User> getUsers(){
         return userRepository.findAll();
     }
+
 
     // ngoai preAuthorize() se co: "PostAuthorize" no cx co tac dung tuong tu PreAuthorize()
     // nhung no co the check id xem co phai la chinh minh ko:
@@ -85,6 +93,16 @@ public class UserService {
     public UserResponse updateUser(String userId, UserUpdateRequest userUpdateRequest){
         User user = getUserDetail2(userId);
         userMapper.updateUser( user, userUpdateRequest );
+        // update lai password
+        user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
+
+        // chung ta can co 1 cai list role lay thong tin tu request
+        var roles = _roleRepository.findAllById(userUpdateRequest.getRoles());
+
+        // maping no vao object user: -> vi o day la set<Role> phai tao 1 instance implement Set
+        user.setRoles( new HashSet<>( roles ) );
+
+
         userRepository.save( user );
         return userMapper.toUserResponse(user);
     }
