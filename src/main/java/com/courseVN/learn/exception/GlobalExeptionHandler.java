@@ -2,12 +2,15 @@ package com.courseVN.learn.exception;
 
 import com.courseVN.learn.dto.response.ApiResponse;
 import com.nimbusds.jose.JOSEException;
+import jakarta.validation.ConstraintViolation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.nio.file.AccessDeniedException;
+import java.util.Map;
+import java.util.Objects;
 
 /*
  token invalid -> 401 & ko co thong bao loi
@@ -19,6 +22,8 @@ import java.nio.file.AccessDeniedException;
 @ControllerAdvice
 public class GlobalExeptionHandler {
     // define cac loai exception ta se bat o day. & tuong ung voi tung loai exception ta se tra ve the nao?
+
+    private static final String MIN_ATTRIBUTE = "min";
 
     // Tao mot Exception Bat all exception ma ngoai le! ko co trong nay
     @ExceptionHandler(value = Exception.class)
@@ -57,17 +62,34 @@ public class GlobalExeptionHandler {
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<String>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException e){
 
+        Map<String, Object> attributes = null;
+
         String enumKey = e.getFieldError().getDefaultMessage();
         ErrorCode errorCode = ErrorCode.INVALID_KEY;
+
         try {
             errorCode = ErrorCode.valueOf(enumKey); // neu nhu ma key word is misspelled
+
+
+            // trong spring cai "exception" cung cap cai kha nang la chung ta co the lay duoc cai attribute ma chung ta
+            // chuyen vao annotation:
+            var constrainViolation = e.getBindingResult()
+                    .getAllErrors().getFirst().unwrap(ConstraintViolation.class); // unwrap cai nay ra de lay mot object ta mong muon
+            // lay ra cac cai errors ma MethodArgumentNotValidException no wrap lai
+
+             attributes = constrainViolation.getConstraintDescriptor().getAttributes(); // tu cai getAttributes lay duoc cai thong tin cua cai params chung ta chuyen vao
+
+            // attribute = {..., min=18, ...};
+
+            // binding don gian vao enum ErrorCode
+
         }catch (IllegalArgumentException ex){
             // log ra thui
             System.out.println(ex.getMessage());
         }
         return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
                 .code(errorCode.getCode())
-                .message(errorCode.getMessage())
+                .message(Objects.nonNull(attributes) ? mapAttribute(errorCode.getMessage(), attributes) : errorCode.getMessage())
                 .build());
 
         //return ResponseEntity.badRequest().body(Objects.requireNonNull(e.getFieldError()).getDefaultMessage());
@@ -79,6 +101,18 @@ public class GlobalExeptionHandler {
                 .code(ErrorCode.UNAUTHORIZED.getCode())
                 .message(e.getMessage())
                 .build());
+    }
+
+
+    // tao 1 ham de map gtri vao ErrorCode:
+    private String mapAttribute(String message, Map<String, Object> attributes){
+
+
+        // replace thong tin trong message goc thanh cac thong tin trong object
+        String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE)) ;
+
+        return message.replace("{" + MIN_ATTRIBUTE + "}", minValue);
+
     }
 
 }

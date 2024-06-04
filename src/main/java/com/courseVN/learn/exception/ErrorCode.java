@@ -15,7 +15,7 @@ public enum ErrorCode {
     INVALID_KEY(1401, "invalid message key!", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1401, "unauthenticated!", HttpStatus.UNAUTHORIZED), // 401
     UNAUTHORIZED(1401, "you do not have permission", HttpStatus.FORBIDDEN ), // 403
-    INVALID_DOB(1400, "you are not old enough", HttpStatus.BAD_REQUEST ) // 403
+    INVALID_DOB(1400, "your age must be at least {min}", HttpStatus.BAD_REQUEST ) // 403
     ;
     private int code;
     private HttpStatusCode httpStatusCode;
