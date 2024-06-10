@@ -1,15 +1,19 @@
 package com.courseVN.learn.service;
 
+import com.courseVN.learn.dto.request.ProfileCreateRequest;
 import com.courseVN.learn.dto.request.UserCreationRequest;
 import com.courseVN.learn.dto.request.UserUpdateRequest;
 import com.courseVN.learn.dto.response.UserResponse;
+import com.courseVN.learn.entity.Role;
 import com.courseVN.learn.entity.User;
 import com.courseVN.learn.enums.Roles;
 import com.courseVN.learn.exception.AppException;
 import com.courseVN.learn.exception.ErrorCode;
+import com.courseVN.learn.mapper.ProfileMapper;
 import com.courseVN.learn.mapper.UserMapper;
 import com.courseVN.learn.repository.RoleRepository;
 import com.courseVN.learn.repository.UserRepository;
+import com.courseVN.learn.repository.httpclient.ProfileClient;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -21,10 +25,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 //@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -41,9 +42,15 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ProfileClient profileClient;
+
+    @Autowired
+    private ProfileMapper profileMapper;
+
     public User createRequest(UserCreationRequest request){
         if( userRepository.existsByUsername(request.getUsername() ) ){
-            throw new RuntimeException();
+            throw new AppException(ErrorCode.USER_EXISTED);
         }
         // runtimeException caught in exception.
 //user.setId(Long.parseLong(UUID.randomUUID().toString()));
@@ -53,20 +60,30 @@ public class UserService {
        // PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10); bo dong nay vi chung ta da tao bean roi
         user.setPassword( passwordEncoder.encode(request.getPassword()) );
 
+
         // dua vao role cua nguoi dung:
-        HashSet<String> roles = new HashSet<>();
-        roles.add(Roles.USER.name());
+        // tim role xem co ton tai ko?
+        Role role_name = _roleRepository.findById(Roles.USER.name()).orElseThrow( ()-> new RuntimeException("role not found") );
+
+        HashSet<Role> roles = new HashSet<>();
+        roles.add(role_name);
       //  user.setRoles(roles);
+        user.setRoles( roles );
+
+      User user1 =  userRepository.save(user);
 
 
-        userRepository.save(user);
-        return user;
+        ProfileCreateRequest profileRequest = profileMapper.toProfileCreateRequest(request);
+        profileRequest.setUserId(String.valueOf(user1.getId()));
+        profileClient.createProfile(profileRequest);
+
+        return user1;
     }
 
     //@PreAuthorize("hasRole('ADMIN')")  -> Vay thi bay h o day! Khi sd "hasRole()" thì ta se chi ap dung cho ROLE_ADMIN or ROLE_USER
     // TAI VI: no se check cai prefix ROLE_ de lay ra role cua nguoi dung!
     // PreAuthorize -> spring se tao ra 1 cai proxy ngay truoc cai ham nay. no se check role truoc
-    @PreAuthorize("hasAuthority('APPROVE_POST')") // su dung "hasAuthority()" cho cac permission -> no se map chinh xac cai authority
+    @PreAuthorize("hasAuthority('CREATE_SELF')") // su dung "hasAuthority()" cho cac permission -> no se map chinh xac cai authority
     public List<User> getUsers(){
         return userRepository.findAll();
     }
@@ -86,6 +103,7 @@ public class UserService {
        return userMapper.toUserResponse(userRepository.findById( userId ).orElseThrow( ()-> new AppException(ErrorCode.USER_NOTFOUND))) ;
     }
 
+    @PreAuthorize("hasRole('USER')")
     public User getUserDetail2(String userId){
         return userRepository.findById( userId ).orElseThrow( ()-> new AppException(ErrorCode.USER_NOTFOUND)) ;
     }

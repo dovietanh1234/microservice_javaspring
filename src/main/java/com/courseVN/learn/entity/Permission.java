@@ -18,7 +18,4 @@ public class Permission {
     @Id
     String name;
     String description;
-
-    @ManyToMany
-    Set<Role> roles;
 }

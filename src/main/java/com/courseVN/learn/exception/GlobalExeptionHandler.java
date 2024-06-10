@@ -74,7 +74,7 @@ public class GlobalExeptionHandler {
             // trong spring cai "exception" cung cap cai kha nang la chung ta co the lay duoc cai attribute ma chung ta
             // chuyen vao annotation:
             var constrainViolation = e.getBindingResult()
-                    .getAllErrors().getFirst().unwrap(ConstraintViolation.class); // unwrap cai nay ra de lay mot object ta mong muon
+                    .getAllErrors().get(0).unwrap(ConstraintViolation.class); // unwrap cai nay ra de lay mot object ta mong muon
             // lay ra cac cai errors ma MethodArgumentNotValidException no wrap lai
 
              attributes = constrainViolation.getConstraintDescriptor().getAttributes(); // tu cai getAttributes lay duoc cai thong tin cua cai params chung ta chuyen vao

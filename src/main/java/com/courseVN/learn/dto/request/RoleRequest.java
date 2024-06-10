@@ -14,6 +14,6 @@ public class RoleRequest {
 
 String name;
 String description;
-Set<String> Permissions;
+Set<String> permissions;
 
 }

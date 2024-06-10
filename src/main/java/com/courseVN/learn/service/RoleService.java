@@ -34,6 +34,8 @@ public class RoleService {
         // lay ra cac cai permission ta da chuyen vao request
       var permissions =  _permissionRepository.findAllById(request.getPermissions());
 
+      System.out.println("data is: " + permissions.toString() );
+
       // chuyen tu list -> set
       role.setPermissions( new HashSet<>( permissions )); // create new HashSet<>() tu cai list permission.
 

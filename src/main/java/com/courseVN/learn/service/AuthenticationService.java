@@ -42,10 +42,11 @@ public class AuthenticationService {
     // khi dua secretKey vao .yml -> team devops ho deploy project cua minh len moi truong cao hon
     // chac chan ho se dung cai sign key khac de dam bao an toan
 
-  @NonFinal
-  @Value("${jwt.signerKey}")
-  protected String SIGNER_KEY;
+//  @NonFinal
+//  @Value("${jwt.signerKey}")
+//  protected String SIGNER_KEY;
 
+    private static String SIGNER_KEY = "1E4BEeshlG+55vB4ZdEBscAw4gEW0HqMeva26R8HyUBDr8jLW3XT68wuDONhlzyl";
 
     public IntrospectResponse introspectToken(IntrospectRequest introspectRequest){
             String token = introspectRequest.getToken();

@@ -24,10 +24,12 @@ import javax.crypto.spec.SecretKeySpec;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    private final String[] PUBLIC_ENDPOINT = {"/users", "/auth/token", "/auth/introspect"};
+    private final String[] PUBLIC_ENDPOINT = {"/public/**", "/auth/**"};
 
-    @Value("${jwt.signerKey}")
-    private String signerKey;
+//    @Value("${jwt.signerKey}")  // Neu KO dat the nay len moi truong khac no se fail luon!
+//    private String signerKey;
+
+    private static String signerKey = "1E4BEeshlG+55vB4ZdEBscAw4gEW0HqMeva26R8HyUBDr8jLW3XT68wuDONhlzyl";
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {

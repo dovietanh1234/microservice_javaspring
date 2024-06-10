@@ -18,7 +18,6 @@ import java.util.List;
 @RequestMapping("/role")
 @Slf4j
 public class RoleController {
-
     @Autowired
     private RoleService roleService;
 
