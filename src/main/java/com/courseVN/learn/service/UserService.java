@@ -84,13 +84,14 @@ public class UserService {
 
         // CAC BUOC DE LAY HEADER TRONG SPRING:
 
-        ServletRequestAttributes servletRequestAttributes =
-                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+//        ServletRequestAttributes servletRequestAttributes =
+//                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+//
+//        var authHeader = servletRequestAttributes.getRequest().getHeader("Authorization");
+//
+//        log.info("Header {}", authHeader);
 
-        var authHeader = servletRequestAttributes.getRequest().getHeader("Authorization");
-
-        log.info("Header {}", authHeader);
-        profileClient.createProfile( authHeader,profileRequest);
+        profileClient.createProfile( profileRequest); //authHeader,
 
         // xu ly bo password:
 
