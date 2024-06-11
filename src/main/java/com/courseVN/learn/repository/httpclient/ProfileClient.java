@@ -6,6 +6,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 // b1 khai bao 1 feignClient
 @FeignClient(name = "profile-service", url="http://localhost:8081/profile") // khai bao root endpoint
@@ -13,7 +15,9 @@ public interface ProfileClient {
 
     // thang nay se connect toi profile service
     @PostMapping(value = "/internal/user", produces = MediaType.APPLICATION_JSON_VALUE) //produces -> tao ra metadata la JSON
-    Object createProfile(@RequestBody ProfileCreateRequest request);
+    Object createProfile(
+            @RequestHeader("Authorization") String token,
+            @RequestBody ProfileCreateRequest request);
 }
 
 /*

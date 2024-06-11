@@ -47,18 +47,26 @@ public class AuthenticationService {
     // khi dua secretKey vao .yml -> team devops ho deploy project cua minh len moi truong cao hon
     // chac chan ho se dung cai sign key khac de dam bao an toan
 
-//  @NonFinal
-//  @Value("${jwt.signerKey}")
-//  protected String SIGNER_KEY;
+  @NonFinal
+  @Value("${jwt.signerKey}")
+  protected String SIGNER_KEY;
 
-    private static String SIGNER_KEY = "1E4BEeshlG+55vB4ZdEBscAw4gEW0HqMeva26R8HyUBDr8jLW3XT68wuDONhlzyl";
+  @NonFinal
+  @Value("${jwt.valid-duration}")
+  protected long VALID_DURATION;
+
+  @NonFinal
+  @Value("${jwt.refreshable-duration}")
+  protected long REFRESH_DURATION;
+
+  //  private static String SIGNER_KEY = "1E4BEeshlG+55vB4ZdEBscAw4gEW0HqMeva26R8HyUBDr8jLW3XT68wuDONhlzyl";
 
     public IntrospectResponse introspectToken(IntrospectRequest introspectRequest){
             String token = introspectRequest.getToken();
             // verify -> framework Nimbus provide us a class is JWSVerifier
            boolean isValid = true;
             try {
-                verifyToken(token);
+                verifyToken(token, false);
             }catch (AppException e){
                 isValid = false;
             }
@@ -68,14 +76,17 @@ public class AuthenticationService {
     }
 
 
-    private SignedJWT verifyToken(String token) {
+    private SignedJWT verifyToken(String token, boolean isRefresh) {
 
         try {
         JWSVerifier verifier =  new MACVerifier(SIGNER_KEY.getBytes());
         SignedJWT signedJWT = SignedJWT.parse(token);
 
         // check xem het han chua?
-        Date expiry_time = signedJWT.getJWTClaimsSet().getExpirationTime();
+        Date expiry_time = (isRefresh) ? // true -> verify refresh token | false -> verify token
+          // lay ra thoi gian expire time -> issue time + time config refresh token enable
+          new Date(signedJWT.getJWTClaimsSet().getIssueTime().toInstant().plus(REFRESH_DURATION, ChronoUnit.SECONDS).toEpochMilli())
+            : signedJWT.getJWTClaimsSet().getExpirationTime(); // verify token thi thoi gian khac. - verify refresh token thi thoi gian khac
         // check is token co phai la cua chung ta tao ra ko?
         var verify = signedJWT.verify(verifier);
 
@@ -130,7 +141,7 @@ public class AuthenticationService {
                 .subject(user.getUsername())
                 .issuer("vietanh")
                 .issueTime( new Date())
-                .expirationTime(new Date(Instant.now().plus( 1, ChronoUnit.HOURS ).toEpochMilli()))
+                .expirationTime(new Date(Instant.now().plus( VALID_DURATION, ChronoUnit.SECONDS ).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString()) // mot chuoi ky tu ngau nhien ko trung nhau!
                 .claim("scope", buildScope(user)) // we config a claim and set roles inside by to building a func get roles
                 // so to put the roles inside we need to config a function:
@@ -180,7 +191,7 @@ public class AuthenticationService {
     public AuthenticationResponse refreshToken(RefreshTokenRequest request){
 
         // check xem token nay con exist or not:
-        SignedJWT signedJWT = verifyToken(request.getToken());
+        SignedJWT signedJWT = verifyToken(request.getToken(), true);
 
         // neu ma thanh cong: -> cap lai refresh token moi | invalid luon cai request.getToken():
         try {
@@ -215,12 +226,18 @@ public class AuthenticationService {
 
     public void logout(LogoutRequest request){
         //  khi logout ta se them 1 dong vao bang invalidateToken:
-        //b1 doc thong tin cua token  -> lay ra cai token id + thoi diem hết hạn
-        System.out.println("hay vao day ko?");
-        var signToken = verifyToken(request.getToken());
 
         // lay cai jwt token id ra:
         try {
+
+            //b1 doc thong tin cua token  -> lay ra cai token id + thoi diem hết hạn
+            var signToken = verifyToken(request.getToken(), true);
+            // tai sao lai su dung time refresh token de logout?
+            // neu ko check time refresh token thi token thi ta se nhan ngay exception "Date expiryTime();"
+            // nghia la ta se luu ca refresh token vao bang invalidate token
+            // chanh viec ho su dung lai cai token nay de lay refresh token moi.
+
+
             String jit = signToken.getJWTClaimsSet().getJWTID();
             Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
 
@@ -231,11 +248,8 @@ public class AuthenticationService {
                     .build();
 
             _invalidatedTokenRepository.save(invalidatedToken);
-
-
-
         } catch (ParseException e) {
-            throw new RuntimeException(e);
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
         //

@@ -16,20 +16,20 @@ import com.courseVN.learn.mapper.UserMapper;
 import com.courseVN.learn.repository.RoleRepository;
 import com.courseVN.learn.repository.UserRepository;
 import com.courseVN.learn.repository.httpclient.ProfileClient;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.*;
 
 @Service
+@Slf4j
 //@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 //RequireArgConstructor
 public class UserService {
@@ -79,7 +79,18 @@ public class UserService {
 
         ProfileCreateRequest profileRequest = profileMapper.toProfileCreateRequest(request);
         profileRequest.setUserId(String.valueOf(user1.getId()));
-        profileClient.createProfile(profileRequest);
+
+        // de get duoc cai token tu cai request thi chung ta se can "RequestContextHolder"
+
+        // CAC BUOC DE LAY HEADER TRONG SPRING:
+
+        ServletRequestAttributes servletRequestAttributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+        var authHeader = servletRequestAttributes.getRequest().getHeader("Authorization");
+
+        log.info("Header {}", authHeader);
+        profileClient.createProfile( authHeader,profileRequest);
 
         // xu ly bo password:
 
