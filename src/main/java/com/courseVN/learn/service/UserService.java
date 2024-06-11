@@ -3,6 +3,7 @@ package com.courseVN.learn.service;
 import com.courseVN.learn.dto.request.ProfileCreateRequest;
 import com.courseVN.learn.dto.request.UserCreationRequest;
 import com.courseVN.learn.dto.request.UserUpdateRequest;
+import com.courseVN.learn.dto.response.RoleResponse;
 import com.courseVN.learn.dto.response.UserResponse;
 import com.courseVN.learn.entity.Role;
 import com.courseVN.learn.entity.User;
@@ -10,6 +11,7 @@ import com.courseVN.learn.enums.Roles;
 import com.courseVN.learn.exception.AppException;
 import com.courseVN.learn.exception.ErrorCode;
 import com.courseVN.learn.mapper.ProfileMapper;
+import com.courseVN.learn.mapper.RoleMapper;
 import com.courseVN.learn.mapper.UserMapper;
 import com.courseVN.learn.repository.RoleRepository;
 import com.courseVN.learn.repository.UserRepository;
@@ -48,7 +50,10 @@ public class UserService {
     @Autowired
     private ProfileMapper profileMapper;
 
-    public User createRequest(UserCreationRequest request){
+    @Autowired
+    private RoleMapper roleMapper;
+
+    public UserResponse createRequest(UserCreationRequest request){
         if( userRepository.existsByUsername(request.getUsername() ) ){
             throw new AppException(ErrorCode.USER_EXISTED);
         }
@@ -72,20 +77,34 @@ public class UserService {
 
       User user1 =  userRepository.save(user);
 
-
         ProfileCreateRequest profileRequest = profileMapper.toProfileCreateRequest(request);
         profileRequest.setUserId(String.valueOf(user1.getId()));
         profileClient.createProfile(profileRequest);
 
-        return user1;
+        // xu ly bo password:
+
+        // chuyen tu role -> role response
+
+        Set<RoleResponse> roles1 = new HashSet<RoleResponse>();
+        user1.getRoles().forEach( role -> {
+            roles1.add( roleMapper.toRoleResponse(role) );
+        } );
+        UserResponse userResponse = userMapper.toUserResponse(user1);
+        userResponse.setRoles(roles1);
+
+        return userResponse;
     }
 
     //@PreAuthorize("hasRole('ADMIN')")  -> Vay thi bay h o day! Khi sd "hasRole()" thì ta se chi ap dung cho ROLE_ADMIN or ROLE_USER
     // TAI VI: no se check cai prefix ROLE_ de lay ra role cua nguoi dung!
     // PreAuthorize -> spring se tao ra 1 cai proxy ngay truoc cai ham nay. no se check role truoc
     @PreAuthorize("hasAuthority('CREATE_SELF')") // su dung "hasAuthority()" cho cac permission -> no se map chinh xac cai authority
-    public List<User> getUsers(){
-        return userRepository.findAll();
+    public List<UserResponse> getUsers(){
+
+        // map la tra ve 1 gtri moi List<User> -> List<UserResponse>
+        return userRepository.findAll().stream().map( user ->
+            userMapper.toUserResponse(user)
+         ).toList();
     }
 
 
@@ -134,6 +153,7 @@ public class UserService {
     // guu token len va lay ve thong tin cua minh:
     public UserResponse getMyInfo(){
         // sau khi dang nhap thanh cong user se duoc mapping vao Security Context holder qua Authentication
+        // guu token qua header la no lay duoc token trong nay!
        var context = SecurityContextHolder.getContext();
 
        // ngoai username co nhiều câc cái khác nữa như username, roles ...

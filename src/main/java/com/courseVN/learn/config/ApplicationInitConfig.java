@@ -1,5 +1,6 @@
 package com.courseVN.learn.config;
 
+import com.courseVN.learn.entity.Role;
 import com.courseVN.learn.entity.User;
 import com.courseVN.learn.enums.Roles;
 import com.courseVN.learn.repository.UserRepository;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
+import java.util.Set;
 
 @Configuration
 @Slf4j

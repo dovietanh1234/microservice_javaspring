@@ -2,11 +2,15 @@ package com.courseVN.learn.service;
 
 import com.courseVN.learn.dto.request.AuthenticationRequest;
 import com.courseVN.learn.dto.request.IntrospectRequest;
+import com.courseVN.learn.dto.request.LogoutRequest;
+import com.courseVN.learn.dto.request.RefreshTokenRequest;
 import com.courseVN.learn.dto.response.AuthenticationResponse;
 import com.courseVN.learn.dto.response.IntrospectResponse;
+import com.courseVN.learn.entity.InvalidatedToken;
 import com.courseVN.learn.entity.User;
 import com.courseVN.learn.exception.AppException;
 import com.courseVN.learn.exception.ErrorCode;
+import com.courseVN.learn.repository.InvalidatedTokenRepository;
 import com.courseVN.learn.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -21,20 +25,21 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Optional;
-import java.util.StringJoiner;
+import java.util.*;
 
 @Service
 public class AuthenticationService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private InvalidatedTokenRepository _invalidatedTokenRepository;
 
     // bao ve cai nay dua vao file .yml
   //  @NonFinal     // ko inject cai nay vao constructor
@@ -51,25 +56,48 @@ public class AuthenticationService {
     public IntrospectResponse introspectToken(IntrospectRequest introspectRequest){
             String token = introspectRequest.getToken();
             // verify -> framework Nimbus provide us a class is JWSVerifier
+           boolean isValid = true;
+            try {
+                verifyToken(token);
+            }catch (AppException e){
+                isValid = false;
+            }
+            return IntrospectResponse.builder()
+                    .valid( isValid )
+                    .build();
+    }
+
+
+    private SignedJWT verifyToken(String token) {
 
         try {
-            JWSVerifier verifier =  new MACVerifier(SIGNER_KEY.getBytes());
-            SignedJWT signedJWT = SignedJWT.parse(token);
+        JWSVerifier verifier =  new MACVerifier(SIGNER_KEY.getBytes());
+        SignedJWT signedJWT = SignedJWT.parse(token);
 
-            // check xem het han chua?
-            Date expiry_time = signedJWT.getJWTClaimsSet().getExpirationTime();
-            // check is token co phai la cua chung ta tao ra ko?
-           var verify = signedJWT.verify(verifier); // return true or false
+        // check xem het han chua?
+        Date expiry_time = signedJWT.getJWTClaimsSet().getExpirationTime();
+        // check is token co phai la cua chung ta tao ra ko?
+        var verify = signedJWT.verify(verifier);
 
-            return IntrospectResponse.builder()
-                    .valid( expiry_time.after( new Date() ) && verify )
-                    .build();
+            if(!(expiry_time.after( new Date() ) && verify)){
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+            // neu ma token nay da ton tai trong DB return error
+            // xu ly duoi nay vi neu nhu no da het hieu luc or expire no se vao EXCEPTION
+            // neu no van con valid va da logout roi thi no ms nam trong kha nang tiem tan invalid token
 
-        } catch (JOSEException | ParseException e) {
-            throw new AppException( ErrorCode.UNAUTHENTICATED );
-        }
+            if(_invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())){
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+
+            return signedJWT;
+
+    } catch (JOSEException | ParseException e) {
+        throw new AppException( ErrorCode.UNAUTHENTICATED );
+    }
 
     }
+
 
     public AuthenticationResponse authenticate(AuthenticationRequest authenticationRequest){
         User user = userRepository.findByUsername(authenticationRequest.getUsername()).orElseThrow( () ->  new AppException(ErrorCode.USER_NOTFOUND));
@@ -103,6 +131,7 @@ public class AuthenticationService {
                 .issuer("vietanh")
                 .issueTime( new Date())
                 .expirationTime(new Date(Instant.now().plus( 1, ChronoUnit.HOURS ).toEpochMilli()))
+                .jwtID(UUID.randomUUID().toString()) // mot chuoi ky tu ngau nhien ko trung nhau!
                 .claim("scope", buildScope(user)) // we config a claim and set roles inside by to building a func get roles
                 // so to put the roles inside we need to config a function:
                 .build();
@@ -144,10 +173,74 @@ public class AuthenticationService {
         }
 
         return stringJoiner.toString();
+    }
 
+//SignedJWT của thư viện Nimbus được sử dụng để tạo và xác thực các JSON Web Tokens (JWT) đã ký
+//SignedJWT của Nimbus là một công cụ mạnh mẽ và linh hoạt trong việc quản lý JWT
+    public AuthenticationResponse refreshToken(RefreshTokenRequest request){
+
+        // check xem token nay con exist or not:
+        SignedJWT signedJWT = verifyToken(request.getToken());
+
+        // neu ma thanh cong: -> cap lai refresh token moi | invalid luon cai request.getToken():
+        try {
+            // B1 INVALID TOKEN CU DI
+            var jit = signedJWT.getJWTClaimsSet().getJWTID();
+            var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .id(jit)
+                    .expireTime(expiryTime)
+                    .build();
+
+            _invalidatedTokenRepository.save(invalidatedToken);
+            var username = signedJWT.getJWTClaimsSet().getSubject();
+
+            User user = userRepository.findByUsername(username).orElseThrow(
+                    ()-> new AppException(ErrorCode.UNAUTHENTICATED)
+            );
+
+            // build token dua tren thong tin user:
+            String token = generateToken(user);
+
+            return AuthenticationResponse.builder()
+                    .token(token)
+                    .build();
+
+        } catch (ParseException e) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
     }
 
 
+    public void logout(LogoutRequest request){
+        //  khi logout ta se them 1 dong vao bang invalidateToken:
+        //b1 doc thong tin cua token  -> lay ra cai token id + thoi diem hết hạn
+        System.out.println("hay vao day ko?");
+        var signToken = verifyToken(request.getToken());
+
+        // lay cai jwt token id ra:
+        try {
+            String jit = signToken.getJWTClaimsSet().getJWTID();
+            Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
+
+            // sau do persist chuyen data va DB InvalidatedToken
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .id(jit)
+                    .expireTime(expiryTime)
+                    .build();
+
+            _invalidatedTokenRepository.save(invalidatedToken);
+
+
+
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+
+        //
+
+    }
 
 
 }

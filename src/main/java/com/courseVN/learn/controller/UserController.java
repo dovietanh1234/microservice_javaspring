@@ -39,8 +39,8 @@ public class UserController {
     * */
 
     @PostMapping("/create")
-   ApiResponse<User> createUser(@RequestBody @Valid UserCreationRequest request){ //@Valid ta can validate cai object nay theo cai rule dc define trong object
-        return ApiResponse.<User>builder()
+   ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request){ //@Valid ta can validate cai object nay theo cai rule dc define trong object
+        return ApiResponse.<UserResponse>builder()
                 .message("create user successfully")
                 .result(userService.createRequest(request))
                 .build();
@@ -50,7 +50,7 @@ public class UserController {
     // method nay se chi nhung ai co role admin ms di vao:
 
     @GetMapping("/get")
-    List<User> getUsers(){
+    List<UserResponse> getUsers(){
     // thì trong spring để get cái thông tin mà hiện tại đang đăng nhập đang đc authenticate trong 1 cái request
     // ta sẽ sử dụng SecurityContextHolder. SecurityContextHolder -> sẽ chưa user dang dăng nhập hiện tại
        var authentication = SecurityContextHolder.getContext().getAuthentication();

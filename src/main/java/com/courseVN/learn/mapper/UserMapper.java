@@ -25,6 +25,7 @@ public interface UserMapper {
 
 
     // tao 1 mapper map tu User -> UserDtoResponseUser
+    @Mapping(target = "password", ignore = true)
     UserResponse toUserResponse(User user);
 
 
